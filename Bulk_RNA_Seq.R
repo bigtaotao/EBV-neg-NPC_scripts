@@ -3,9 +3,9 @@ $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Fig2E $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Fig2E $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Fig2E $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-TCGA_HNSC <- read.csv("/mnt/data/user_data/zlu/01_job/WXD_LMP1_rnaseq/TCGA_HNSC/TCGA_HNSC_data_biopsy_site_rename.csv")
-paracancerous_tissue <- read.csv("/mnt/data/user_data/zlu/01_job/WXD_LMP1_rnaseq/TCGA_HNSC/GSE134886/GSE134886_paracancerous_tissue_count.csv")
-nasopharyngeal_mucosa <- read.csv("/mnt/data/user_data/zlu/01_job/WXD_LMP1_rnaseq/TCGA_HNSC/GSE118719/GSE118719_4_nasopharyngeal_mucosa.csv")
+TCGA_HNSC <- read.csv("./TCGA_HNSC_data_biopsy_site_rename.csv")
+paracancerous_tissue <- read.csv("./GSE134886/GSE134886_paracancerous_tissue_count.csv")
+nasopharyngeal_mucosa <- read.csv("./GSE118719/GSE118719_4_nasopharyngeal_mucosa.csv")
 
 mouse_organoid <- read.csv("./mouse_normal_organoid.csv")
 mouse_organoid <- mouse_organoid[!duplicated(mouse_organoid$X),]
