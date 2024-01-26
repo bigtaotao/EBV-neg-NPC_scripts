@@ -3,10 +3,9 @@ $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Fig2E $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Fig2E $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Fig2E $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-
-mouse_tissue <- read.csv(file="./mouse_normal_tissue.csv")
-mouse_tissue <- mouse_tissue[!duplicated(mouse_tissue$X),]
-dim(mouse_tissue)
+TCGA_HNSC <- read.csv("/mnt/data/user_data/zlu/01_job/WXD_LMP1_rnaseq/TCGA_HNSC/TCGA_HNSC_data_biopsy_site_rename.csv")
+paracancerous_tissue <- read.csv("/mnt/data/user_data/zlu/01_job/WXD_LMP1_rnaseq/TCGA_HNSC/GSE134886/GSE134886_paracancerous_tissue_count.csv")
+nasopharyngeal_mucosa <- read.csv("/mnt/data/user_data/zlu/01_job/WXD_LMP1_rnaseq/TCGA_HNSC/GSE118719/GSE118719_4_nasopharyngeal_mucosa.csv")
 
 mouse_organoid <- read.csv("./mouse_normal_organoid.csv")
 mouse_organoid <- mouse_organoid[!duplicated(mouse_organoid$X),]
@@ -74,8 +73,8 @@ normalized_DEseq_mix <- counts(DESeq_counts_mix, normalized=TRUE)
 
 countdata <- merge(all_count_1,mouse_tissue,by.x="mouse_symbol",by.y= "X")
 rownames(countdata) <- countdata$mouse_symbol
-countdata_mix <- countdata[,c(3:20,34:40,42:43)]#去掉Tongue的剩余样本
-countdata_mix <- countdata[,c(3:40,42:43)] #全部样本
+countdata_mix <- countdata[,c(3:20,34:40,42:43)]
+countdata_mix <- countdata[,c(3:40,42:43)]
 
 colnames(countdata_mix)
 id <- colnames(countdata_mix)
@@ -446,16 +445,6 @@ dev.off()
 
 ##GSEA
 
-gsea_data <- read.csv("./P_ctrl_vs_nomal_organoid/P_ctrl_VS_normal_organoid_05_P_ctrl_v_normal_organoid_count_tpm_symbol_and_anno.csv")
-gsea_data$Description <- c("NULL")
-gsea_data <- gsea_data[,c(20,23,8,9,10,11,12,13)]
-nrow(gsea_data)
-gsea_data <- na.omit(gsea_data)
-nrow(gsea_data)
-colnames(gsea_data)
-colnames(gsea_data) <- c("NAME","Description","P_ctrl_1","P_ctrl_2","P_ctrl_3","normal_organoid_1","normal_organoid_2","normal_organoid_3")
-write.csv(gsea_data,file="./P_ctrl_vs_nomal_organoid/gsea_data.csv")
-
 java -cp ./gsea/gsea-3.0.jar -Xmx1024m xtools.gsea.Gsea \
 -res gsea_data.gct \
 -cls gsea.cls \
@@ -558,36 +547,6 @@ $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Fig3E $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Fig3E $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Fig3E $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-###############nasopharynx marker
-all_gene <- read.csv("nasopha_vs_three_organoid_heatmap_data_up_log2fFC1.csv")
-
-head(all_gene)
-all_gene <- all_gene[!duplicated(all_gene$X),]
-all_gene <- na.omit(all_gene)
-rownames(all_gene) <- all_gene[,1]
-all_gene <- all_gene[,-1]
-colnames(all_gene)
-all_gene <- all_gene[,c(1:3,10:12)]
-
-zscore <- t(apply(all_gene, 1, function(x) (x-mean(x))/sd(x)))
-zscore <- na.omit(zscore)
-head(zscore)
-
-library(Seurat)
-library(ggplot2)
-library(pheatmap)
-library(RColorBrewer)
-source("./my_code/MyBestFunction_scRNA.R")
-source("./my_code/Pseudo_CNV_series.R")
-
-SeuratObject <- CreateSeuratObject(counts = zscore, project = "NPC")
-gene <- rownames(zscore)
-
-pdf("nasopha_marker_compared_lung_up_log2fFC1_heatmap.pdf")
-XY_heatmap(seurat_obj=SeuratObject,group="orig.ident", genes=gene,all_num=FALSE,new_names=NULL,labels_rot=90,assay_sel="RNA",color=colorRampPalette(brewer.pal(10, "RdBu"))(101),min_and_max_cut=1.2,show_row_names=FALSE,scale=FALSE,label_size=0,mark_gene=c("Krt5","Krt13","Krt14","Krt15","Krt16","Krt17","Tuba1c","Cfap45","Nes","Muc15","Muc16","Trp63"))
-dev.off()
-
-#####################NPC marker
 all_gene <- read.csv("./Primary_TMP_v_normal_organoid_heatmap_data.csv")
 head(all_gene)
 all_gene <- all_gene[!duplicated(all_gene$X),]
@@ -622,11 +581,6 @@ $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Fig3G $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Fig3G $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 
-mwget https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE64634&format=file
-mwget https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE12452&format=file
-mwget https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE13597&format=file
-
-
 **************************GSE13597
 library("GEOquery")
 gse <- getGEO("GSE13597",GSEMatrix = TRUE, destdir = ".",getGPL = T, AnnotGPL = T)
@@ -652,7 +606,7 @@ write.csv(count_anno, "GSE13597_count_anno.csv")
 count_anno_without_arrayID <- explan_final[,1:31]
 write.csv(count_anno_without_arrayID, "GSE13597_count_anno_without_arrayID.csv")
 
-group_list <- factor(c(rep('Normal',3),rep('NPC_tumor',25))) #自己定义分组和数量
+group_list <- factor(c(rep('Normal',3),rep('NPC_tumor',25))) 
 table(group_list)
 
 library(limma)
@@ -1290,7 +1244,7 @@ up_kegg1 <- up_kegg[-(21:nrow(up_kegg)),]
   print(g_kegg)
 dev.off()
 
-#####GO 富集
+#####GO
 ee	<-as.matrix(upres_1$entrez)
 	dd <- as.vector(ee)
 GOupres_1_all <- enrichGO(gene = dd, 
@@ -1336,17 +1290,6 @@ ff1 <- ff + theme(axis.text.y = element_text(size = 8)) +labs(title = NULL)
 pdf(file = "primary_LMP1_v_ctrl_GO_DOWN_top5.pdf")
 ff1
 dev.off()
-
-#####GSEA 富集
-gsea_data <- read.csv("./primary_LMP1_vs_ctrl/primary_LMP1_05_LMP1_v_ctrl_count_tpm_symbol_and_anno.csv")
-gsea_data$Description <- c("NULL")
-gsea_data <- gsea_data[,c(18,21,10,11,7,8,9)]
-nrow(gsea_data)
-gsea_data <- na.omit(gsea_data)
-nrow(gsea_data)
-colnames(gsea_data)
-colnames(gsea_data) <- c("NAME","Description","LMP1_2","LMP1_3","ctrl_1","ctrl_2","ctrl_3")
-write.csv(gsea_data,file="./primary_LMP1_vs_ctrl/gsea_data.csv")
 
 ###GSEA
 java -cp ./gsea/gsea-3.0.jar -Xmx1024m xtools.gsea.Gsea \
