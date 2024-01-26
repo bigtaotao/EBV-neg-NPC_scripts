@@ -370,3 +370,81 @@ pdf(height=4,"./TCM_oncoplot_neg_v4.pdf")
 p_neg
 dev.off()
 
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ FigS6.B $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ FigS6.B $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ FigS6.B $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+### add pos neg gc data
+if(T){
+  rm(list = ls())
+  library(data.table)
+  library(dplyr)
+  library(ggplot2)
+  fc_npc = fread("./data/GSE53819.top.table.tsv")
+  npc_tr2 = fc_npc %>% filter(Gene.symbol == "TGFBR2")
+  npc_logfc = mean(npc_tr2$logFC)
+  npc_logfc = data.frame(Tumor_type = "EBV+ NPC",foldchange = npc_logfc)
+
+  # plotdata = rbind(npc_logfc,hnsc_logfc,stad_logfc,gc_pos_logfc,gc_neg_logfc)
+  plotdata = npc_logfc
+  plotdata$foldchange = 2^plotdata$foldchange
+  plotdata$group = "Tumor"
+  pn = data.frame(Tumor_type = plotdata$Tumor_type,group = "Normal",foldchange = 1)
+  plotdata = rbind(plotdata,pn)
+  plotdata$group = factor(plotdata$group,levels = c("Tumor","Normal"))
+  p = ggplot(data = plotdata,aes(x = Tumor_type,y = foldchange,fill = group))+
+    geom_bar(stat = 'identity',position = "dodge",width=0.4)+
+    theme_classic()+
+    xlab("Tumor type")+
+    ylab("Foldchange")
+  ## split pos neg
+  p = ggplot(data = plotdata,aes(x = group,y = foldchange,fill = group))+
+    geom_bar(stat = 'identity',position = "dodge",width=0.4)+
+    theme_classic()+
+    xlab("Sample type")+
+    ylab("Foldchange")
+  ggsave(filename = "./output/21.TGFBR2_foldchange_addGC.pdf",width = 5,height = 5)
+}
+
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ FigS6.D $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ FigS6.D $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ FigS6.D $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+if(T){
+  library(dplyr)
+  library(ggplot2)
+  library(ggrepel)
+  library(paletteer)
+  library(data.table)
+  library(survminer)
+  library(survival)
+
+  get_cond = function(exp_data){
+    tgfbr2_exp = c(t(exp_data[row.names(exp_data) == "TGFBR2",]))
+    tgfbr2_quantile = quantile(tgfbr2_exp) 
+    tgfbr2_low = colnames(exp_data)[tgfbr2_exp < tgfbr2_quantile[2]]
+    tgfbr2_high = colnames(exp_data)[tgfbr2_exp > tgfbr2_quantile[4]]
+    tgfbr2_low = data.frame(sample = tgfbr2_low,TGFBR2 = "low")
+    tgfbr2_high = data.frame(sample = tgfbr2_high,TGFBR2= "high")
+    tgfbr2_mid = colnames(exp_data)[tgfbr2_exp <= tgfbr2_quantile[4] & tgfbr2_exp >= tgfbr2_quantile[2]]
+    tgfbr2_mid = data.frame(sample = tgfbr2_mid,TGFBR2 = "mid")
+    cond = rbind(tgfbr2_low,tgfbr2_high,tgfbr2_mid)
+    # rownames(cond) = cond$sample
+    # cond$group = cond$condition
+    # cond = cond[,-1]
+    return(cond)
+  }
+  #EBV+ NPC
+  exp_data = read.csv("./data/ebv_NPC_genes.fpkm_table.csv",row.names = 1)
+  os_data = read.csv("./data/PFS.csv") %>% dplyr::select("case","status","time")
+  colnames(exp_data) = str_sub(colnames(exp_data),end = -3)
+  exp_data = exp_data[,colnames(exp_data) %in% os_data$case]
+  
+  condition = get_cond(exp_data)
+  survdata = left_join(condition,os_data,by = c("sample" = "case"))
+  fit_km =surv_fit(Surv(time,status) ~TGFBR2, data = survdata)
+  pdf(paste0("./output/19.NPC_TGFBR2_survival.pdf"),width = 5,height = 5)
+  print(ggsurvplot(fit_km, data = survdata,surv.median.line = "hv",  # 增加中位生存时间
+                   conf.int = F,risk.table = F,title = "TGFBR2 high-low survival status", pval = TRUE))
+  dev.off()
+}
